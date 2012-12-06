@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">RSSampleCompare</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="menu_settings">Settings</string>
+    <string name="button1">Simple Java</string>
+    <string name="button2">Concurrent</string>
+    <string name="button3">Renderscript</string>
+
+</resources>
