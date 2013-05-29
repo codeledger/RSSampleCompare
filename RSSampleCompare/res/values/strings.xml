@@ -4,8 +4,10 @@
     <string name="app_name">RSSampleCompare</string>
     <string name="hello_world">Hello world!</string>
     <string name="menu_settings">Settings</string>
-    <string name="button1">Simple Java</string>
-    <string name="button2">Concurrent</string>
-    <string name="button3">Renderscript</string>
+    <string name="simple_text">Simple</string>
+    <string name="parallel_text">Parallel</string>
+    <string name="simple_native_text">Native</string>
+    <string name="parallel_native_text">Parallel Native</string>
+    <string name="renderscript_text">Renderscript</string>
 
 </resources>

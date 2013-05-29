@@ -12,22 +12,34 @@
         android:orientation="horizontal" >
 
         <Button
-            android:id="@+id/button1"
+            android:id="@+id/simplejava"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/button1" />
+            android:text="@string/simple_text" />
 
         <Button
-            android:id="@+id/button2"
+            android:id="@+id/paralleljava"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/button2" />
+            android:text="@string/parallel_text" />
 
         <Button
-            android:id="@+id/button3"
+            android:id="@+id/simplenative"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/button3" />
+            android:text="@string/simple_native_text" />
+        
+       	<Button
+            android:id="@+id/parallelnative"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/parallel_native_text" />
+       	
+       	<Button
+            android:id="@+id/renderscriptbutton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/renderscript_text" />
 
         <TextView
             android:id="@+id/processorView1"

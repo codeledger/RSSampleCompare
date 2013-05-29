@@ -12,41 +12,62 @@
         android:orientation="horizontal" >
 
         <Button
-            android:id="@+id/button1"
+            android:id="@+id/simplejava"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/button1" />
+            android:text="@string/simple_text" />
 
         <Button
-            android:id="@+id/button2"
+            android:id="@+id/paralleljava"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/button2" />
+            android:text="@string/parallel_text" />
 
         <Button
-            android:id="@+id/button3"
+            android:id="@+id/simplenative"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/button3" />
+            android:text="@string/simple_native_text" />
 
-        <TextView
-            android:id="@+id/processorView1"
+        <Button
+            android:id="@+id/parallelnative"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="TextView" />
-        
-      	<TextView
-            android:id="@+id/timingView1"
+            android:text="@string/parallel_native_text" />
+       	
+       	<Button
+            android:id="@+id/renderscriptbutton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="TextView" />
-        
+            android:text="@string/renderscript_text" />
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical" >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+
+            <TextView
+                android:id="@+id/processorView1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="TextView"
+                android:textSize="30sp" 
+                android:padding="10dp"/>
+
+            <TextView
+                android:id="@+id/timingView1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="TextView" 
+                android:textSize="30sp"
+                android:padding="10dp"/>
+        </LinearLayout>
 
         <ImageView
             android:id="@+id/imageView1"

@@ -38,10 +38,17 @@ public class MainActivity extends Activity {
 	TextView results2;
 	ImageView imageView2;
 	Button button3;
+	Button button4;
 	TextView results3;
 	ImageView imageView3;
 	TextView processorsView;
 	TextView timingView;
+
+	Button simpleButton;
+	Button parallelButton;
+	Button simplenativeButton;
+	Button parallelnativeButton;
+	Button renderscriptButton;
 	
 	Bitmap mBitmapIn;
 	Bitmap mBitmapOut;
@@ -53,7 +60,9 @@ public class MainActivity extends Activity {
 	private ScriptC_water mScript;
 	
 	SimpleRun worker;
-	ExecutorRun workerFuture;
+	ExecutorRun workerParallel;
+	SimpleNativeRun workerNative;
+	ExecutorNativeRun workerNativeParallel;
 	RenderRun workerRender;
 	
 	Runtime runTime;
@@ -75,9 +84,11 @@ public class MainActivity extends Activity {
 		mBitmapIn = loadBitmap(R.drawable.lena512color);
 		mBitmapOut = Bitmap.createBitmap(mBitmapIn.getWidth(),mBitmapIn.getHeight(),mBitmapIn.getConfig());
 
-		button1 = (Button) findViewById(R.id.button1);
-		button2 = (Button) findViewById(R.id.button2);
-		button3 = (Button) findViewById(R.id.button3);
+		simpleButton = (Button) findViewById(R.id.simplejava);
+		parallelButton = (Button) findViewById(R.id.paralleljava);
+		simplenativeButton = (Button) findViewById(R.id.simplenative);
+		parallelnativeButton = (Button) findViewById(R.id.parallelnative);
+		renderscriptButton = (Button) findViewById(R.id.renderscriptbutton);
 
 		imageView1 = (ImageView) findViewById(R.id.imageView1);
 		imageView1.setImageBitmap(mBitmapIn);
@@ -85,7 +96,7 @@ public class MainActivity extends Activity {
 		imageView2 = (ImageView) findViewById(R.id.imageView2);
 		imageView2.setImageBitmap(mBitmapOut);
 
-		button1.setOnClickListener(new OnClickListener() {
+		simpleButton.setOnClickListener(new OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
@@ -96,7 +107,7 @@ public class MainActivity extends Activity {
 
 		});
 
-		button2.setOnClickListener(new OnClickListener() {
+		parallelButton.setOnClickListener(new OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
@@ -107,7 +118,29 @@ public class MainActivity extends Activity {
 
 		});
 
-		button3.setOnClickListener(new OnClickListener() {
+		simplenativeButton.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				Log.d(TAG,"Native start");
+				doWaterViaNative(imageView2,mBitmapIn,mBitmapOut);
+				Log.d(TAG,"Native end");
+			}
+
+		});
+		
+		parallelnativeButton.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				Log.d(TAG,"Native Executor Task start");
+				doWaterViaNativeParallel(imageView2,mBitmapIn,mBitmapOut);
+				Log.d(TAG,"Native Executor Task end");		
+			}
+			
+		});
+		
+		renderscriptButton.setOnClickListener(new OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
@@ -117,6 +150,7 @@ public class MainActivity extends Activity {
 			}
 			
 		});
+
 	}
 
 	@Override
@@ -138,8 +172,18 @@ public class MainActivity extends Activity {
 	}
 
 	void doWaterViaTask(ImageView outWater, Bitmap bitmapIn, Bitmap bitmapOut) {
-		workerFuture = new ExecutorRun(outWater, bitmapIn, bitmapOut,4);
-		workerFuture.execute();
+		workerParallel = new ExecutorRun(outWater, bitmapIn, bitmapOut,4);
+		workerParallel.execute();
+	}
+	
+	void doWaterViaNative(ImageView outWater, Bitmap bitmapIn, Bitmap bitmapOut) {
+		workerNative = new SimpleNativeRun(outWater, bitmapIn, bitmapOut);
+		workerNative.execute();
+	}
+	
+	void doWaterViaNativeParallel(ImageView outWater, Bitmap bitmapIn, Bitmap bitmapOut) {
+		workerNativeParallel = new ExecutorNativeRun(outWater, bitmapIn, bitmapOut,4);
+		workerNativeParallel.execute();
 	}
 	
 	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
@@ -162,6 +206,7 @@ public class MainActivity extends Activity {
         workerRender.execute();
 	}
 
+	/** Use Java only */
 	class SimpleRun extends AsyncTask<Void,Void,Bitmap> {
 
 		int[] in;
@@ -219,7 +264,7 @@ public class MainActivity extends Activity {
 					imageView.setImageBitmap(bitmap);
 					imageView.invalidate();
 					long delta = (endTime - startTime)/1000;
-					timingView.setText("Timing: " + delta);
+					timingView.setText("Timing: " + delta + "ns");
 					Log.d(TAG,"done");
 				}
 			}
@@ -227,6 +272,7 @@ public class MainActivity extends Activity {
 
 	}
 	
+	/** Use Java with Java Executor Threads */
 	class ExecutorRun extends AsyncTask<Void,Void,Bitmap> {
 
 		int[] in;
@@ -316,13 +362,177 @@ public class MainActivity extends Activity {
 					imageView.setImageBitmap(bitmap);
 					imageView.invalidate();
 					long delta = (endTime - startTime)/1000;
-					timingView.setText("Timing: " + delta);
+					timingView.setText("Timing: " + delta + "ns");
 					Log.d(TAG,"done");
 				}
 			}
 		}
 	}
 	
+	/** Use JNI/native code only */
+	class SimpleNativeRun extends AsyncTask<Void,Void,Bitmap> {
+
+		int[] in;
+		int[] out;
+
+		int width;
+		int height;
+		Bitmap srcBitmap;
+		Bitmap destBitmap;
+		
+		Long startTime;
+		Long endTime;
+
+		private final WeakReference<ImageView> imageViewReference;
+
+		public SimpleNativeRun(ImageView dest, Bitmap aSrcBitmap, Bitmap aDestBitmap) {
+			imageViewReference = new WeakReference<ImageView>(dest);
+			width = aSrcBitmap.getWidth();
+			height = aSrcBitmap.getHeight();
+			in = new int[width * height];
+			out = new int[width * height];
+			srcBitmap = aSrcBitmap;
+			destBitmap = aDestBitmap;
+			srcBitmap.getPixels(in, 0, width, 0, 0, width, height);
+
+		}
+
+		@Override 
+		protected void onPreExecute() {
+			destBitmap.setPixels(out, 0, width, 0, 0, width, height);
+			if(imageViewReference !=null) {
+				final ImageView imageView = imageViewReference.get();
+				if(imageView != null) {
+					imageView.setImageBitmap(destBitmap);
+					imageView.invalidate();
+					Log.d(TAG,"clear");
+				}
+			}	
+		}
+		
+		@Override
+		protected Bitmap doInBackground(Void... params) {
+			startTime = System.nanoTime();
+			NativeWaterFilter.nativeWaterFilter(0, 0, width, height, 5, in, out);
+			endTime = System.nanoTime();
+			destBitmap.setPixels(out, 0, width, 0, 0, width, height);
+			return destBitmap;
+		}
+
+		@Override
+		protected void onPostExecute(Bitmap bitmap) {
+			if(imageViewReference !=null && bitmap != null) {
+				final ImageView imageView = imageViewReference.get();
+				if(imageView != null) {
+					imageView.setImageBitmap(bitmap);
+					imageView.invalidate();
+					long delta = (endTime - startTime)/1000;
+					timingView.setText("Timing: " + delta + "ns");
+					Log.d(TAG,"Simple Native done");
+				}
+			}
+		}
+
+	}
+	
+	/** Use JNI/native code and Java Executor Threads */
+	class ExecutorNativeRun extends AsyncTask<Void,Void,Bitmap> {
+
+		int[] in;
+		int[] out;
+
+		int width;
+		int widthSection;
+		int sectionCounter;
+		int height;
+		int heightSection;
+		Bitmap srcBitmap;
+		Bitmap destBitmap;
+
+		int threadSetSize;
+		private final WeakReference<ImageView> imageViewReference;
+
+		ExecutorService taskExecutorPool;
+
+		Long startTime;
+		Long endTime;
+		
+		public ExecutorNativeRun(ImageView dest, Bitmap aSrcBitmap, Bitmap aDestBitmap, int aThreadSize) {
+			threadSetSize = aThreadSize;
+			taskExecutorPool = Executors.newFixedThreadPool(threadSetSize);
+			// slice up image into 
+			imageViewReference = new WeakReference<ImageView>(dest);
+			width = aSrcBitmap.getWidth();
+			height = aSrcBitmap.getHeight();
+			in = new int[width * height];
+			out = new int[width * height];
+			srcBitmap = aSrcBitmap;
+			destBitmap = aDestBitmap;
+			srcBitmap.getPixels(in, 0, width, 0, 0, width, height);
+			destBitmap.setPixels(out, 0, width, 0, 0, width, height);
+			dest.invalidate();
+
+		}
+
+		@Override
+		protected void onPreExecute() {
+			destBitmap.setPixels(out, 0, width, 0, 0, width, height);
+			if(imageViewReference !=null) {
+				final ImageView imageView = imageViewReference.get();
+				if(imageView != null) {
+					imageView.setImageBitmap(destBitmap);
+					imageView.invalidate();
+					Log.d(TAG,"clear");
+				}
+			}	
+		}
+		
+		@Override
+		protected Bitmap doInBackground(Void... params) {
+			CompletionService<Void> cs = new ExecutorCompletionService<Void>(taskExecutorPool);
+			widthSection = width / threadSetSize;
+			heightSection = height / threadSetSize;
+			
+			startTime = System.nanoTime();
+			for(sectionCounter = 0 ; sectionCounter < threadSetSize; sectionCounter++) {
+				cs.submit(new Callable<Void>() {
+					int startHeight = heightSection * sectionCounter;
+					int endHeight = heightSection * (sectionCounter + 1);
+					public Void call() throws Exception {
+						Log.d(TAG,"nativeWaterFilter " + startHeight + " " + endHeight );
+						NativeWaterFilter.nativeWaterFilter(0, startHeight, width, endHeight, 5, in, out);
+						return null;
+					}
+				});
+			}
+			for(int i = 0; i < threadSetSize; i++) {
+				try {
+					cs.take().get();
+				} catch (Exception e) {
+					Log.d(TAG,"Oops error " + e.toString());
+				}
+			}
+			endTime = System.nanoTime();
+			destBitmap.setPixels(out, 0, width, 0, 0, width, height);
+			return destBitmap;
+		}
+
+		@Override
+		protected void onPostExecute(Bitmap bitmap) {
+			if(imageViewReference !=null && bitmap != null) {
+				final ImageView imageView = imageViewReference.get();
+				if(imageView != null) {
+					imageView.setImageBitmap(bitmap);
+					imageView.invalidate();
+					long delta = (endTime - startTime)/1000;
+					timingView.setText("Timing: " + delta + "ns");
+					Log.d(TAG,"Native done");
+				}
+			}
+		}
+	}
+	
+	/** Use Renderscript */
 	class RenderRun extends AsyncTask<Void,Void,Bitmap> {
 
     	int[] in;
@@ -381,14 +591,14 @@ public class MainActivity extends Activity {
     				imageView.setImageBitmap(bitmap);
     				imageView.invalidate();
 					long delta = (endTime - startTime)/1000;
-					timingView.setText("Timing: " + delta);
+					timingView.setText("Timing: " + delta + "ns");
     			}
     		}
     		
     		Log.d(TAG,"Renderscript done");
-    	}
-
-		
+    	}		
 	}
+
+	
 }
 
