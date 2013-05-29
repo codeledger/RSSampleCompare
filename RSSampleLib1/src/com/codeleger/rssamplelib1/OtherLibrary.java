@@ -80,7 +80,7 @@ public class OtherLibrary {
     
     
     public OtherLibrary() {
-    	
+    		super();
     }
     
 }
